@@ -1,0 +1,291 @@
+openapi: 3.0.3
+info:
+  title: Keysy API
+  description: API documentation for managing user credentials securely.
+  version: 1.0.0
+  contact:
+    name: Your Company Name
+    email: support@yourcompany.com
+    url: https://yourcompany.com
+
+servers:
+  - url: https://api.yourcompany.com/v1
+    description: Production server
+  - url: http://localhost:8080/v1
+    description: Development server
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  minLength: 8
+                  example: "secureP@ssword1"
+              required:
+                - email
+                - password
+      responses:
+        "201":
+          description: User successfully registered
+        "400":
+          description: Bad request, validation failed
+        "409":
+          description: Conflict, user already exists
+        "500":
+          description: Internal server error
+
+  /auth/login:
+    post:
+      summary: User login
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  example: "secureP@ssword1"
+              required:
+                - email
+                - password
+      responses:
+        "200":
+          description: Successful login, returns JWT token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.S1Y8RGXaBOlL6L-1P-pnUoRxHoI2qVmhMc9C6DIkGs4"
+        "401":
+          description: Unauthorized, invalid credentials
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+
+  /passwords:
+    get:
+      summary: List all password entries
+      operationId: getPasswords
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of password entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    website:
+                      type: string
+                      example: "https://example.com"
+                    username:
+                      type: string
+                      example: "user@example.com"
+                    id:
+                      type: integer
+                      example: 1
+        "401":
+          description: Unauthorized, missing or invalid token
+        "500":
+          description: Internal server error
+
+    post:
+      summary: Add a new password entry
+      operationId: addPassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                website:
+                  type: string
+                  example: "https://example.com"
+                username:
+                  type: string
+                  example: "user@example.com"
+                password:
+                  type: string
+                  example: "SecureP@ssw0rd"
+              required:
+                - website
+                - username
+                - password
+      responses:
+        "201":
+          description: Password entry successfully created
+        "400":
+          description: Bad request, validation failed
+        "401":
+          description: Unauthorized, missing or invalid token
+        "500":
+          description: Internal server error
+
+  /passwords/{id}:
+    get:
+      summary: Retrieve a specific password entry
+      operationId: getPassword
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the password entry
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successfully retrieved password entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  website:
+                    type: string
+                    example: "https://example.com"
+                  username:
+                    type: string
+                    example: "user@example.com"
+                  password:
+                    type: string
+                    example: "EncryptedPasswordHere"
+        "404":
+          description: Password entry not found
+        "401":
+          description: Unauthorized, missing or invalid token
+        "500":
+          description: Internal server error
+
+    put:
+      summary: Update a password entry
+      operationId: updatePassword
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the password entry
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                website:
+                  type: string
+                  example: "https://example.com"
+                username:
+                  type: string
+                  example: "user@example.com"
+                password:
+                  type: string
+                  example: "NewSecureP@ssw0rd"
+              required:
+                - website
+                - username
+                - password
+      responses:
+        "200":
+          description: Password entry updated successfully
+        "400":
+          description: Bad request, validation failed
+        "404":
+          description: Password entry not found
+        "401":
+          description: Unauthorized, missing or invalid token
+        "500":
+          description: Internal server error
+
+    delete:
+      summary: Delete a password entry
+      operationId: deletePassword
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the password entry
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Password entry successfully deleted
+        "404":
+          description: Password entry not found
+        "401":
+          description: Unauthorized, missing or invalid token
+        "500":
+          description: Internal server error
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    PasswordEntry:
+      type: object
+      properties:
+        website:
+          type: string
+          example: "https://example.com"
+        username:
+          type: string
+          example: "user@example.com"
+        password:
+          type: string
+          example: "EncryptedPasswordHere"
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        hashedPassword:
+          type: string
+          example: "$2a$10$abcdefghijklmnopqrstuv"
