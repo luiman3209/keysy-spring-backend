@@ -1,11 +1,11 @@
-package com.luicode.keysy.keysyservice.dto;
+package com.luicode.keysy.keysyservice.dtos;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class RegisterRequest {
+public class LoginRequest {
     @Email
     @NotBlank
     private String email;
