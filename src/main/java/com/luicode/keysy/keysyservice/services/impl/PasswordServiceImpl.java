@@ -1,5 +1,6 @@
 package com.luicode.keysy.keysyservice.services.impl;
 
+import com.luicode.keysy.keysyservice.dtos.GetAllPasswordsResponse;
 import com.luicode.keysy.keysyservice.dtos.PasswordEntryRequest;
 import com.luicode.keysy.keysyservice.dtos.PasswordEntryResponse;
 import com.luicode.keysy.keysyservice.entities.User;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static java.util.Objects.nonNull;
+
 
 @Service
 @RequiredArgsConstructor
@@ -32,17 +35,19 @@ public class PasswordServiceImpl implements PasswordService {
 
     private User checkUserExistenceOrThrowException(String username) {
         return userRepository.findByEmail(username)
-                .orElseThrow(() -> new KeysyException(messageSource, "error.incentive.triplet.not.found", HttpStatus.NOT_FOUND.name()));
+                .orElseThrow(() -> new KeysyException(messageSource, "error.keysy.user.not.found", HttpStatus.NOT_FOUND.name()));
     }
 
     @Override
-    public List<PasswordEntryResponse> getAllPasswords(String username) {
+    public GetAllPasswordsResponse getAllPasswords(String username) {
 
         User user = checkUserExistenceOrThrowException(username);
 
         List<UserPassword> passwordEntries = userPasswordRepository.findByUserId(user.getId());
 
-        return passwordResponseMapper.toPasswordEntryResponseList(passwordEntries);
+        return GetAllPasswordsResponse.builder()
+                .passwords(passwordResponseMapper.toPasswordEntryResponseList(passwordEntries))
+                .build();
     }
 
     @Override
@@ -65,7 +70,7 @@ public class PasswordServiceImpl implements PasswordService {
         User user = checkUserExistenceOrThrowException(username);
 
         return passwordResponseMapper.toPasswordEntryResponse(userPasswordRepository.findByIdAndUserId(id, user.getId())
-                .orElseThrow(() -> new RuntimeException("Password not found")));
+                .orElseThrow(() -> new KeysyException(messageSource, "error.keysy.password.not.found", HttpStatus.NOT_FOUND.name())));
     }
 
     @Override
@@ -74,11 +79,12 @@ public class PasswordServiceImpl implements PasswordService {
         User user = checkUserExistenceOrThrowException(username);
 
         UserPassword pwdToUpdate =
-                userPasswordRepository.findByIdAndUserId(id, user.getId()).orElseThrow(() -> new RuntimeException("Password not found"));
+                userPasswordRepository.findByIdAndUserId(id, user.getId())
+                        .orElseThrow(() -> new KeysyException(messageSource, "error.keysy.password.not.found", HttpStatus.NOT_FOUND.name()));
 
-        pwdToUpdate.setEntryName(passwordRequest.getEntryName());
-        pwdToUpdate.setUsername(passwordRequest.getUsername());
-        pwdToUpdate.setCryptedPassword(passwordEncoder.encode(passwordRequest.getPassword()));
+        if(nonNull(passwordRequest.getEntryName())) pwdToUpdate.setEntryName(passwordRequest.getEntryName());
+        if(nonNull(passwordRequest.getUsername())) pwdToUpdate.setUsername(passwordRequest.getUsername());
+        if(nonNull(passwordRequest.getPassword())) pwdToUpdate.setCryptedPassword(passwordEncoder.encode(passwordRequest.getPassword()));
 
         userPasswordRepository.save(pwdToUpdate);
     }
@@ -89,7 +95,8 @@ public class PasswordServiceImpl implements PasswordService {
         User user = checkUserExistenceOrThrowException(username);
 
         UserPassword pwdToDelete =
-                userPasswordRepository.findByIdAndUserId(id, user.getId()).orElseThrow(() -> new RuntimeException("Password not found"));
+                userPasswordRepository.findByIdAndUserId(id, user.getId())
+                        .orElseThrow(() -> new KeysyException(messageSource, "error.keysy.password.not.found", HttpStatus.NOT_FOUND.name()));
 
         userPasswordRepository.delete(pwdToDelete);
 

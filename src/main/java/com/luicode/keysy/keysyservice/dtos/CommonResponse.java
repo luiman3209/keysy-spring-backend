@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class CommonErrorResponse {
+public class CommonResponse {
 
     private String message;
 }

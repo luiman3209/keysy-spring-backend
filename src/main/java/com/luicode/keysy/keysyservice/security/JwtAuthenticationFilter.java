@@ -1,6 +1,7 @@
 package com.luicode.keysy.keysyservice.security;
 
 import com.luicode.keysy.keysyservice.services.JwtService;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -75,7 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
 
 
-            }catch (MalformedJwtException e){
+            }catch (MalformedJwtException | ExpiredJwtException e){
                 filterChain.doFilter(request, response);
             }
 

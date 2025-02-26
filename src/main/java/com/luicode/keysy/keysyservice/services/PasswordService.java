@@ -1,12 +1,11 @@
 package com.luicode.keysy.keysyservice.services;
 
+import com.luicode.keysy.keysyservice.dtos.GetAllPasswordsResponse;
 import com.luicode.keysy.keysyservice.dtos.PasswordEntryRequest;
 import com.luicode.keysy.keysyservice.dtos.PasswordEntryResponse;
 
-import java.util.List;
-
 public interface PasswordService {
-    List<PasswordEntryResponse> getAllPasswords(String username);
+    GetAllPasswordsResponse getAllPasswords(String username);
     void addPassword(PasswordEntryRequest passwordRequest, String username);
     PasswordEntryResponse getPasswordById(Long id, String username);
     void updatePassword(Long id, PasswordEntryRequest passwordRequest, String username);
