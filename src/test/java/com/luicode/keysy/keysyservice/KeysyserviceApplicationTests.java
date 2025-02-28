@@ -1,9 +1,9 @@
 package com.luicode.keysy.keysyservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.luicode.keysy.keysyservice.dtos.CommonResponse;
 import com.luicode.keysy.keysyservice.dtos.GetAllPasswordsResponse;
 import com.luicode.keysy.keysyservice.dtos.PasswordEntryRequest;
+import com.luicode.keysy.keysyservice.dtos.PasswordEntryResponse;
 import com.luicode.keysy.keysyservice.utils.DbInit;
 import com.luicode.keysy.keysyservice.utils.JwtTestUtils;
 import com.luicode.keysy.keysyservice.utils.MessageUtils;
@@ -56,7 +56,7 @@ public class KeysyserviceApplicationTests {
 	private String headerTokenValue;
 
 	@BeforeAll
-	void setUp() {
+	void setUp() throws Exception {
 		jwtToken = jwtTestUtils.generateTestToken(DbInit.TEST_USER_EMAIL);
 		headerTokenValue = "Bearer " + jwtToken;
 		dbInit.initData();
@@ -107,9 +107,9 @@ public class KeysyserviceApplicationTests {
 				.andDo(print())
 				.andReturn().getResponse().getContentAsString();
 
-		CommonResponse resp = objectMapper.readValue(respContent, CommonResponse.class);
+		PasswordEntryResponse resp = objectMapper.readValue(respContent, PasswordEntryResponse.class);
 		assertNotNull(resp);
-		assertEquals(messageUtils.getMessage("password.added.successfully"), resp.getMessage());
+		assertNotNull(resp.getId());
 	}
 
 }

@@ -49,10 +49,7 @@ public class PasswordController {
     public ResponseEntity<Object> addPassword(@Valid @RequestBody PasswordEntryRequest passwordRequest) {
         try{
             User user = keysyUtils.extractUserFromSecurityContext();
-            passwordService.addPassword(passwordRequest, user.getEmail());
-            return ResponseEntity.status(200).body(CommonResponse.builder()
-                            .message(messageUtils.getMessage("password.added.successfully"))
-                            .build());
+            return ResponseEntity.ok(passwordService.addPassword(passwordRequest, user.getEmail()));
         }catch (KeysyException e){
             return ResponseEntity.status(HttpStatus.valueOf(e.getCode())).body(CommonResponse.builder()
                     .message(e.getMessage())
@@ -83,9 +80,7 @@ public class PasswordController {
                                                  @Valid @RequestBody PasswordEntryRequest passwordRequest) {
         try{
             User user = keysyUtils.extractUserFromSecurityContext();
-            passwordService.updatePassword(id, passwordRequest, user.getEmail());
-            return ResponseEntity.status(200).body(CommonResponse.builder()
-                    .message(messageUtils.getMessage("password.updated.successfully")).build());
+            return ResponseEntity.ok(passwordService.updatePassword(id, passwordRequest, user.getEmail()));
         }catch (KeysyException e){
             return ResponseEntity.status(HttpStatus.valueOf(e.getCode())).body(CommonResponse.builder()
                     .message(e.getMessage())

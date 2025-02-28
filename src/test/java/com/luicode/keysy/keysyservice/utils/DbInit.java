@@ -4,6 +4,8 @@ import com.luicode.keysy.keysyservice.entities.User;
 import com.luicode.keysy.keysyservice.entities.UserPassword;
 import com.luicode.keysy.keysyservice.repositories.UserPasswordRepository;
 import com.luicode.keysy.keysyservice.repositories.UserRepository;
+import com.luicode.keysy.keysyservice.services.CryptoService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -15,7 +17,7 @@ public class DbInit {
     private UserRepository userRepository;
 
     @Autowired
-    BCryptPasswordEncoder passwordEncoder;
+    CryptoService cryptoService;
 
     @Autowired
     UserPasswordRepository userPasswordRepository;
@@ -23,7 +25,7 @@ public class DbInit {
 
     public static final String TEST_USER_EMAIL = "test@example.com";
 
-    public void initData() {
+    public void initData() throws Exception {
 
         User user = userRepository.save(User.builder()
                         .email(TEST_USER_EMAIL)
@@ -34,7 +36,7 @@ public class DbInit {
                         .userId(user.getId())
                         .entryName("Facebook")
                         .username("pippo")
-                        .cryptedPassword(passwordEncoder.encode("password"))
+                        .cryptedPassword(cryptoService.encrypt("password"))
                 .build());
 
     }

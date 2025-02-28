@@ -9,16 +9,18 @@ import com.luicode.keysy.keysyservice.exceptions.KeysyException;
 import com.luicode.keysy.keysyservice.mappers.PasswordResponseMapper;
 import com.luicode.keysy.keysyservice.repositories.UserPasswordRepository;
 import com.luicode.keysy.keysyservice.repositories.UserRepository;
+import com.luicode.keysy.keysyservice.services.CryptoService;
 import com.luicode.keysy.keysyservice.services.PasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 import static java.util.Objects.nonNull;
+
+import java.util.ArrayList;
 
 
 @Service
@@ -28,7 +30,7 @@ public class PasswordServiceImpl implements PasswordService {
     private final UserPasswordRepository userPasswordRepository;
     private final UserRepository userRepository;
     private final PasswordResponseMapper passwordResponseMapper;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final CryptoService cryptoService;
 
     private final MessageSource messageSource;
 
@@ -45,22 +47,41 @@ public class PasswordServiceImpl implements PasswordService {
 
         List<UserPassword> passwordEntries = userPasswordRepository.findByUserId(user.getId());
 
+        List<PasswordEntryResponse> respList;
+
+        try {
+            respList = passwordResponseMapper.toPasswordEntryResponseList(passwordEntries);
+        } catch (Exception e) {
+            throw new KeysyException(messageSource, "error.generic", HttpStatus.BAD_REQUEST.name());
+        }
+
         return GetAllPasswordsResponse.builder()
-                .passwords(passwordResponseMapper.toPasswordEntryResponseList(passwordEntries))
+                .passwords(respList)
                 .build();
     }
 
     @Override
-    public void addPassword(PasswordEntryRequest passwordRequest, String username) {
+    public PasswordEntryResponse addPassword(PasswordEntryRequest passwordRequest, String username) {
 
         User user = checkUserExistenceOrThrowException(username);
 
-        userPasswordRepository.save(UserPassword.builder()
+
+        try {
+
+            String cryptedPassword = cryptoService.encrypt(passwordRequest.getPassword());
+
+            return passwordResponseMapper.toPasswordEntryResponse(userPasswordRepository.save(UserPassword.builder()
                 .entryName(passwordRequest.getEntryName())
                 .username(passwordRequest.getUsername())
-                .cryptedPassword(passwordEncoder.encode(passwordRequest.getPassword()))
+                .cryptedPassword(cryptedPassword)
                 .userId(user.getId())
-                .build());
+                .build()));
+
+        } catch (Exception e) {
+            throw new KeysyException(messageSource, "error.generic", HttpStatus.INTERNAL_SERVER_ERROR.name());
+        }
+
+        
 
     }
 
@@ -69,12 +90,16 @@ public class PasswordServiceImpl implements PasswordService {
 
         User user = checkUserExistenceOrThrowException(username);
 
-        return passwordResponseMapper.toPasswordEntryResponse(userPasswordRepository.findByIdAndUserId(id, user.getId())
-                .orElseThrow(() -> new KeysyException(messageSource, "error.keysy.password.not.found", HttpStatus.NOT_FOUND.name())));
+        try {
+            return passwordResponseMapper.toPasswordEntryResponse(userPasswordRepository.findByIdAndUserId(id, user.getId())
+                    .orElseThrow(() -> new KeysyException(messageSource, "error.keysy.password.not.found", HttpStatus.NOT_FOUND.name())));
+        } catch (Exception e) {
+            throw new KeysyException(messageSource, "error.generic", HttpStatus.INTERNAL_SERVER_ERROR.name());
+        }
     }
 
     @Override
-    public void updatePassword(Long id, PasswordEntryRequest passwordRequest, String username) {
+    public PasswordEntryResponse updatePassword(Long id, PasswordEntryRequest passwordRequest, String username) {
 
         User user = checkUserExistenceOrThrowException(username);
 
@@ -82,11 +107,21 @@ public class PasswordServiceImpl implements PasswordService {
                 userPasswordRepository.findByIdAndUserId(id, user.getId())
                         .orElseThrow(() -> new KeysyException(messageSource, "error.keysy.password.not.found", HttpStatus.NOT_FOUND.name()));
 
-        if(nonNull(passwordRequest.getEntryName())) pwdToUpdate.setEntryName(passwordRequest.getEntryName());
-        if(nonNull(passwordRequest.getUsername())) pwdToUpdate.setUsername(passwordRequest.getUsername());
-        if(nonNull(passwordRequest.getPassword())) pwdToUpdate.setCryptedPassword(passwordEncoder.encode(passwordRequest.getPassword()));
+        
+        try {
+            String cryptedPassword = cryptoService.encrypt(passwordRequest.getPassword());
 
-        userPasswordRepository.save(pwdToUpdate);
+            if(nonNull(passwordRequest.getEntryName())) pwdToUpdate.setEntryName(passwordRequest.getEntryName());
+            if(nonNull(passwordRequest.getUsername())) pwdToUpdate.setUsername(passwordRequest.getUsername());
+            if(nonNull(passwordRequest.getPassword())) pwdToUpdate.setCryptedPassword(cryptedPassword);
+
+            return passwordResponseMapper.toPasswordEntryResponse(userPasswordRepository.save(pwdToUpdate));
+
+        } catch (Exception e) {
+            throw new KeysyException(messageSource, "error.generic", HttpStatus.INTERNAL_SERVER_ERROR.name());
+        }
+
+        
     }
 
     @Override
