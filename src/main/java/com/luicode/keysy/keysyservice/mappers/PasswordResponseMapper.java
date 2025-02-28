@@ -5,7 +5,6 @@ import com.luicode.keysy.keysyservice.entities.UserPassword;
 import com.luicode.keysy.keysyservice.services.CryptoService;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
